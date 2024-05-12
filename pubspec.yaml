@@ -1,0 +1,31 @@
+name: mcquenji_firebase
+description: "Firebase module for apps using flutter_modular and firebase"
+version: 0.0.1
+homepage: https://github.com/mcquenji/mcquenji_firebase
+publish_to: "none"
+
+environment:
+  sdk: ">=3.3.4 <4.0.0"
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter_bloc: ^8.1.4
+  dio: ^5.4.3+1
+  either_dart: ^1.0.0
+  flutter:
+    sdk: flutter
+  flutter_modular: ^6.3.3
+  freezed_annotation: ^2.4.1
+  logging: ^1.2.0
+  mcquenji_core:
+    git:
+      url: https://github.com/mcquenji/mcquenji_core.git
+
+dev_dependencies:
+  build_runner: ^2.4.9
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
+  freezed: ^2.5.2
+
+flutter: null
