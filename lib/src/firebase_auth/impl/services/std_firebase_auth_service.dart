@@ -231,4 +231,10 @@ class StdFirebaseAuthService extends FirebaseAuthService {
       codeAutoRetrievalTimeout: codeAutoRetrievalTimeout,
     );
   }
+
+  @override
+  User? get currentUser => firebaseAuth.currentUser;
+
+  @override
+  bool get isAuthenticated => firebaseAuth.currentUser != null;
 }

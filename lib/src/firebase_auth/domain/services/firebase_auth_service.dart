@@ -8,6 +8,12 @@ abstract class FirebaseAuthService extends Service {
   @override
   String get name => 'Firebase.Auth';
 
+  /// `true` if the user is authenticated, `false` otherwise.
+  bool get isAuthenticated;
+
+  /// The current user, or `null` if the user is not authenticated.
+  User? get currentUser;
+
   /// Applies a verification code sent to the user by email or other out-of-band mechanism.
   Future<void> applyActionCode(String code);
 
