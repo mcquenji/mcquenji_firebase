@@ -6,7 +6,7 @@ import 'package:mcquenji_core/mcquenji_core.dart';
 /// Wraps the [FirebaseAuth] class from the `firebase_auth` package for use in a modular environment.
 abstract class FirebaseAuthService extends Service {
   @override
-  String get name => 'FirebaseAuth';
+  String get name => 'Firebase.Auth';
 
   /// Applies a verification code sent to the user by email or other out-of-band mechanism.
   Future<void> applyActionCode(String code);
