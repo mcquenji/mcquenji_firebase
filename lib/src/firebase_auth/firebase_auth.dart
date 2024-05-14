@@ -24,6 +24,6 @@ class FirebaseAuthModule extends Module {
   @override
   void exportedBinds(Injector i) {
     i.addInstance(FirebaseAuth.instance);
-    i.addLazySingleton(StdFirebaseAuthService.new);
+    i.addLazySingleton<FirebaseAuthService>(StdFirebaseAuthService.new);
   }
 }
