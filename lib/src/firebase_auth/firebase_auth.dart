@@ -13,6 +13,14 @@ import 'package:mcquenji_firebase/src/firebase_auth/impl/impl.dart';
 /// See also:
 ///   - [FirebaseAuthGuard] to protect routes with Firebase Authentication.
 class FirebaseAuthModule extends Module {
+  /// Module for working with Firebase Authentication in a modular way.
+  ///
+  /// ---
+  ///
+  /// See also:
+  ///   - [FirebaseAuthGuard] to protect routes with Firebase Authentication.
+  FirebaseAuthModule();
+
   @override
   void exportedBinds(Injector i) {
     i.addInstance(FirebaseAuth.instance);
