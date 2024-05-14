@@ -94,7 +94,8 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
 
   /// Saves the given [model] to the Firestore collection with the specified [id].
   ///
-  /// If a document with the given [id] already exists, it will be updated. Otherwise, a new document will be created.
+  /// The document will be created if it doesn't exist yet.
+  /// If a document with the given [id] already exists, it will be overwritten.
   @nonVirtual
   Future<void> write(T model, String id) {
     return db.write(serialize(model), "$collectionPath/$id");
