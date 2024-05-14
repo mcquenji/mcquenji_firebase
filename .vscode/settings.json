@@ -3,6 +3,7 @@
   "conventionalCommits.gitmoji": false,
   "dart.flutterSdkPath": ".fvm/versions/3.19.6",
   "conventionalCommits.scopes": [
-    "auth"
+    "auth",
+    "firestore"
   ]
 }
