@@ -97,8 +97,10 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
   /// The document will be created if it doesn't exist yet.
   /// If a document with the given [id] already exists, it will be overwritten.
   @nonVirtual
-  Future<void> write(T model, String id) {
-    return db.write(serialize(model), "$collectionPath/$id");
+  Future<void> write(T model, String id) async {
+    log('Writing document with ID: $id to collection: $collectionPath');
+    await db.write(serialize(model), "$collectionPath/$id");
+    log('Successfully wrote document with ID: $id to collection: $collectionPath');
   }
 
   /// Reads the model data from the Firestore collection with the specified [id].
@@ -106,19 +108,24 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
   /// Throws a [DocumentNotFoundException] if the document with the given [id] is not found.
   @nonVirtual
   Future<T> read(String id) async {
+    log('Reading document with ID: $id from collection: $collectionPath');
     var data = await db.read("$collectionPath/$id");
 
     if (data == null) {
+      log('Document with ID: $id not found in collection: $collectionPath');
       throw DocumentNotFoundException(id);
     }
 
+    log('Successfully read document with ID: $id from collection: $collectionPath');
     return deserialize(data);
   }
 
   /// Deletes the model data from the Firestore collection with the specified [id].
   @nonVirtual
-  Future<void> delete(String id) {
-    return db.delete("$collectionPath/$id");
+  Future<void> delete(String id) async {
+    log('Deleting document with ID: $id from collection: $collectionPath');
+    await db.delete("$collectionPath/$id");
+    log('Successfully deleted document with ID: $id from collection: $collectionPath');
   }
 
   /// Returns a stream of model data from the Firestore collection with the specified [id].
@@ -126,7 +133,9 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
   /// The stream will emit the current model data and any subsequent changes to the model data.
   @nonVirtual
   Stream<T> watch(String id) {
+    log('Setting up watch on document with ID: $id in collection: $collectionPath');
     if (_watchedDocuments.containsKey(id)) {
+      log('Watch already exists for document with ID: $id in collection: $collectionPath');
       return _watchedDocuments[id]!.stream;
     }
 
@@ -134,16 +143,19 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
 
     db.watch("$collectionPath/$id").listen((event) {
       if (event.isLeft) {
+        log('Document with ID: $id was deleted from collection: $collectionPath');
         controller.addError(DocumentNotFoundException(id));
         controller.close();
         return;
       }
 
+      log('Received update for document with ID: $id in collection: $collectionPath');
       controller.add(deserialize(event.right));
     });
 
     _watchedDocuments[id] = controller;
 
+    log('Watch set up successfully for document with ID: $id in collection: $collectionPath');
     return controller.stream;
   }
 
@@ -152,8 +164,10 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
   /// The models are returned as a map where the key is the document id and the value is the deserialized data.
   @nonVirtual
   Future<Map<String, T>> readAll() async {
+    log('Reading all documents in collection: $collectionPath');
     var data = await db.readAll(collectionPath);
 
+    log('Successfully read ${data.length} documents from collection: $collectionPath');
     return data.map((key, value) => MapEntry(key, deserialize(value)));
   }
 
@@ -168,13 +182,16 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
   /// Use with caution.
   @nonVirtual
   Stream<Map<String, T>> watchAll() {
+    log('Setting up watch on all documents in collection: $collectionPath');
     if (_collectionStream != null) {
+      log('Watch already exists for collection: $collectionPath');
       return _collectionStream!.stream;
     }
 
     _collectionStream = StreamController<Map<String, T>>.broadcast();
 
     db.watchAll(collectionPath).listen((event) {
+      log('Received update for collection: $collectionPath');
       _collectionStream!.add(
         event.map(
           (key, value) => MapEntry(key, deserialize(value)),
@@ -182,19 +199,23 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
       );
     });
 
+    log('Watch set up successfully for collection: $collectionPath');
     return _collectionStream!.stream;
   }
 
   @override
   @mustCallSuper
   void dispose() {
+    log('Disposing TypedFirebaseFirestoreDataSource for collection: $collectionPath');
     for (var e in _watchedDocuments.values) {
       e.close();
     }
     _watchedDocuments.clear();
+    log('Closed and cleared watched document streams');
 
     _collectionStream?.close();
     _collectionStream = null;
+    log('Closed and cleared collection stream');
   }
 
   /// Deserializes the data from the Firestore database.
