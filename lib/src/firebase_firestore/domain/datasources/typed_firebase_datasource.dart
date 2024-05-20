@@ -17,7 +17,7 @@ import 'package:mcquenji_firebase/mcquenji_firebase.dart';
 ///
 /// ```dart
 /// class MyModelDataSource extends TypedFirebaseFirestoreDataSource<MyModel> {
-///   MyModelDataSource(super.auth, super.db) : super(collectionPath: 'my_data');
+///   MyModelDataSource({required super.db}) : super(collectionPath: 'my_data');
 ///
 ///   @override
 ///   MyModel deserialize(Map<String, dynamic> data) => MyModel.fromJson(data);
@@ -41,9 +41,6 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
   @override
   String get name => 'Firebase.Firestore.Typed';
 
-  /// The [FirebaseAuthService] to use for authentication.
-  final FirebaseAuthService auth;
-
   /// The [FirebaseFirestoreDataSource] to use for Firestore operations.
   final FirebaseFirestoreDataSource db;
 
@@ -63,7 +60,7 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
   ///
   /// ```dart
   /// class MyModelDataSource extends TypedFirebaseFirestoreDataSource<MyModel> {
-  ///   MyModelDataSource(super.auth, super.db) : super(collectionPath: 'my_data');
+  ///   MyModelDataSource({required super.db}) : super(collectionPath: 'my_data');
   ///
   ///   @override
   ///   MyModel deserialize(Map<String, dynamic> data) => MyModel.fromJson(data);
@@ -85,7 +82,6 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
   /// ```
   TypedFirebaseFirestoreDataSource({
     required this.collectionPath,
-    required this.auth,
     required this.db,
   });
 
