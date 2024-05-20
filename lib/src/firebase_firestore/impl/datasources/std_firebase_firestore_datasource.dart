@@ -17,16 +17,16 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
 
   @override
   Future<void> delete(String path) async {
-    log('Attempting to delete document at path: $path');
+    log('Attempting to delete document at $path');
     final doc = await db.doc(path).get();
 
     if (!doc.exists) {
-      log('Document at path $path does not exist, skipping delete.');
+      log('Document at $path does not exist, skipping delete.');
       return;
     }
 
     await doc.reference.delete();
-    log('Successfully deleted document at path: $path');
+    log('Successfully deleted document at $path');
   }
 
   @override
@@ -47,13 +47,18 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
 
   @override
   Future<Map<String, dynamic>?> read(String path) async {
-    log('Reading document at path: $path');
+    log('Reading document at $path');
     var ref = await db.doc(path).get();
 
+    if (!ref.exists) {
+      log('Document at $path does not exist.');
+      return null;
+    }
+
     if (ref.data() == null) {
-      log('Document at path $path does not exist or has no data.');
+      log('Document at $path does not exist or has no data.');
     } else {
-      log('Successfully read document at path: $path');
+      log('Successfully read document at $path');
     }
 
     return ref.data();
@@ -61,16 +66,26 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
 
   @override
   Future<Map<String, dynamic>> readAll(String path) async {
-    log('Reading all documents in collection at path: $path');
+    log('Reading all documents in collection at $path');
     Map<String, Map<String, dynamic>> data = {};
 
-    var ref = await db.collection(path).get();
+    try {
+      var ref = await db.collection(path).get();
 
-    for (var doc in ref.docs) {
-      data[doc.id] = (doc.data());
+      for (var doc in ref.docs) {
+        data[doc.id] = (doc.data());
+      }
+    } catch (e, stack) {
+      log(
+        'Error reading all documents in collection at $path. Does the collection exist?',
+        e,
+        stack,
+      );
+
+      return {};
     }
 
-    log('Successfully read ${data.length} documents from collection at path: $path');
+    log('Successfully read ${data.length} documents from collection at $path');
     return data;
   }
 
@@ -78,9 +93,9 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
   Stream<Either<DocumentDeletedException, Map<String, dynamic>>> watch(
     String path,
   ) {
-    log('Setting up watch on document at path: $path');
+    log('Setting up watch on document at $path');
     if (_watchedDocs.containsKey(path)) {
-      log('Watch already exists for document at path: $path');
+      log('Watch already exists for document at $path. Returning existing stream.');
       return _watchedDocs[path]!.stream.asBroadcastStream();
     }
 
@@ -88,7 +103,7 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
 
     db.doc(path).snapshots().listen((event) {
       if (!event.exists) {
-        log('Document at path $path was deleted');
+        log('Document at $path was deleted');
         controller.add(Left(DocumentDeletedException(path)));
         controller.close();
 
@@ -96,35 +111,35 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
         return;
       }
 
-      log('Received update for document at path: $path');
+      log('Received update for document at $path');
       controller.add(Right(event.data()!));
     });
 
     _watchedDocs[path] = controller;
-    log('Watch set up successfully for document at path: $path');
+    log('Watch set up successfully for document at $path');
 
     return controller.stream;
   }
 
   @override
   Future<void> write(Map<String, dynamic> data, String path) async {
-    log('Writing document to path: $path with data: $data');
+    log('Writing document to $path with data: $data');
     await db.doc(path).set(data);
-    log('Successfully wrote document to path: $path');
+    log('Successfully wrote document to $path');
   }
 
   @override
   Future<void> update(Map<String, dynamic> data, String path) async {
-    log('Updating document at path: $path with data: $data');
+    log('Updating document at $path with data: $data');
     await db.doc(path).update(data);
-    log('Successfully updated document at path: $path');
+    log('Successfully updated document at $path');
   }
 
   @override
   Stream<Map<String, Map<String, dynamic>>> watchAll(String path) {
-    log('Setting up watch on collection at path: $path');
+    log('Setting up watch on collection at $path');
     if (_watchedCollections.containsKey(path)) {
-      log('Watch already exists for collection at path: $path');
+      log('Watch already exists for collection at $path');
       return _watchedCollections[path]!.stream.asBroadcastStream();
     }
 
@@ -138,20 +153,20 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
       for (var change in event.docChanges) {
         if (change.type == DocumentChangeType.removed) {
           data.remove(change.doc.id);
-          log('Document with ID ${change.doc.id} was removed from collection at path: $path');
+          log('Document with ID ${change.doc.id} was removed from collection at $path');
           continue;
         }
 
         data[change.doc.id] = change.doc.data()!;
-        log('Document with ID ${change.doc.id} was updated in collection at path: $path');
+        log('Document with ID ${change.doc.id} was updated in collection at $path');
       }
 
       controller.add(data);
-      log('Emitted updated data for collection at path: $path');
+      log('Emitted updated data for collection at $path');
     });
 
     _watchedCollections[path] = controller;
-    log('Watch set up successfully for collection at path: $path');
+    log('Watch set up successfully for collection at $path');
 
     return controller.stream;
   }
