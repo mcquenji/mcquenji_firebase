@@ -72,4 +72,13 @@ abstract class FirebaseFirestoreDataSource extends Datasource {
   ///
   /// A [path] is a string consiting of the colloction id and it's (optional) subcollection id (e.g. "users" or "users/123/history").
   Stream<Map<String, Map<String, dynamic>>> watchAll(String path);
+
+  /// Generates a new document id for the given [path].
+  ///
+  /// The [path] must point to a collection.
+  ///
+  /// ---
+  ///
+  /// A [path] is a string consiting of the colloction id and it's (optional) subcollection id (e.g. "users" or "users/123/history").
+  String generateNewDocumentId(String path);
 }

@@ -155,6 +155,11 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
 
     return controller.stream;
   }
+
+  @override
+  String generateNewDocumentId(String path) {
+    return db.collection(path).doc().id;
+  }
 }
 
 typedef _DocStream

@@ -219,4 +219,7 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
 
   /// Serializes the data to be written to the Firestore database.
   Map<String, dynamic> serialize(T data);
+
+  /// Generates a new document ID.
+  String newDocumentId() => db.generateNewDocumentId(collectionPath);
 }
