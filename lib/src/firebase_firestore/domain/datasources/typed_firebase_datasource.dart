@@ -203,7 +203,7 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
 
     _collectionStreams[(path, where)] = controller;
 
-    db.watchAll(collectionPath).listen((event) {
+    db.watchAll(path).listen((event) {
       log('Received update for collection: ${(path, where)}');
       controller.add(
         event.map(
