@@ -222,4 +222,7 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
 
   /// Generates a new document ID.
   String newDocumentId() => db.generateNewDocumentId(collectionPath);
+
+  /// Returns the number of documents in the collection.
+  Future<int> count() => db.count(collectionPath);
 }

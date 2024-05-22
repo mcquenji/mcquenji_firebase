@@ -175,6 +175,13 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
   String generateNewDocumentId(String path) {
     return db.collection(path).doc().id;
   }
+
+  @override
+  Future<int> count(String path) async {
+    final collection = await db.collection(path).count().get();
+
+    return collection.count ?? 0;
+  }
 }
 
 typedef _DocStream

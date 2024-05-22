@@ -81,4 +81,11 @@ abstract class FirebaseFirestoreDataSource extends Datasource {
   ///
   /// A [path] is a string consiting of the colloction id and it's (optional) subcollection id (e.g. "users" or "users/123/history").
   String generateNewDocumentId(String path);
+
+  /// Counts the number of documents in the collection at the given [path].
+  ///
+  /// ---
+  ///
+  /// A [path] is a string consiting of the colloction id and it's (optional) subcollection id (e.g. "users" or "users/123/history").
+  Future<int> count(String path);
 }
