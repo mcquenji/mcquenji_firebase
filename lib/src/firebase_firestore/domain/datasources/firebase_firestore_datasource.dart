@@ -30,7 +30,7 @@ abstract class FirebaseFirestoreDataSource extends Datasource {
   /// ---
   ///
   /// A [path] is a string consiting of the colloction id and it's (optional) subcollection id (e.g. "users" or "users/123/history").
-  Future<Map<String, dynamic>> readAll(String path);
+  Future<Map<String, dynamic>> readAll(String path, {DocumentQuery? where});
 
   /// Writes the given [data] to the document at the given [path].
   ///
@@ -71,7 +71,8 @@ abstract class FirebaseFirestoreDataSource extends Datasource {
   /// ---
   ///
   /// A [path] is a string consiting of the colloction id and it's (optional) subcollection id (e.g. "users" or "users/123/history").
-  Stream<Map<String, Map<String, dynamic>>> watchAll(String path);
+  Stream<Map<String, Map<String, dynamic>>> watchAll(String path,
+      {DocumentQuery? where});
 
   /// Generates a new document id for the given [path].
   ///
@@ -87,5 +88,5 @@ abstract class FirebaseFirestoreDataSource extends Datasource {
   /// ---
   ///
   /// A [path] is a string consiting of the colloction id and it's (optional) subcollection id (e.g. "users" or "users/123/history").
-  Future<int> count(String path);
+  Future<int> count(String path, {DocumentQuery? where});
 }

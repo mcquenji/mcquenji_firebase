@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:either_dart/either.dart';
 import 'package:mcquenji_firebase/mcquenji_firebase.dart';
+import 'package:mcquenji_firebase/src/firebase_firestore/domain/domain.dart';
 
 /// Standard implementation of [FirebaseFirestoreDataSource].
 class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
@@ -13,7 +14,8 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
   StdFirebaseFirestoreDataSource(this.db);
 
   final Map<String, _DocStream> _watchedDocs = {};
-  final Map<String, _CollectionStream> _watchedCollections = {};
+  final Map<(String, DocumentQuery?), _CollectionStream> _watchedCollections =
+      {};
 
   @override
   Future<void> delete(String path) async {
@@ -65,12 +67,15 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> readAll(String path) async {
+  Future<Map<String, dynamic>> readAll(
+    String path, {
+    DocumentQuery? where,
+  }) async {
     log('Reading all documents in collection at $path');
     Map<String, Map<String, dynamic>> data = {};
 
     try {
-      var ref = await db.collection(path).get();
+      var ref = await _filterCollection(path, where).get();
 
       for (var doc in ref.docs) {
         data[doc.id] = (doc.data());
@@ -136,11 +141,14 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
   }
 
   @override
-  Stream<Map<String, Map<String, dynamic>>> watchAll(String path) {
+  Stream<Map<String, Map<String, dynamic>>> watchAll(
+    String path, {
+    DocumentQuery? where,
+  }) {
     log('Setting up watch on collection at $path');
-    if (_watchedCollections.containsKey(path)) {
+    if (_watchedCollections.containsKey((path, where))) {
       log('Watch already exists for collection at $path');
-      return _watchedCollections[path]!.stream.asBroadcastStream();
+      return _watchedCollections[(path, where)]!.stream.asBroadcastStream();
     }
 
     // The sink is closed when [dispose] is called.
@@ -149,24 +157,30 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
 
     Map<String, Map<String, dynamic>> data = {};
 
-    db.collection(path).snapshots().listen((event) {
+    _filterCollection(path, where).snapshots().listen((event) {
       for (var change in event.docChanges) {
         if (change.type == DocumentChangeType.removed) {
           data.remove(change.doc.id);
-          log('Document with ID ${change.doc.id} was removed from collection at $path');
+          log('Document with ID ${change.doc.id} was removed from collection at ${(
+            path,
+            where
+          )}');
           continue;
         }
 
         data[change.doc.id] = change.doc.data()!;
-        log('Document with ID ${change.doc.id} was updated in collection at $path');
+        log('Document with ID ${change.doc.id} was updated in collection at ${(
+          path,
+          where
+        )}');
       }
 
       controller.add(data);
-      log('Emitted updated data for collection at $path');
+      log('Emitted updated data for collection at ${(path, where)}');
     });
 
-    _watchedCollections[path] = controller;
-    log('Watch set up successfully for collection at $path');
+    _watchedCollections[(path, where)] = controller;
+    log('Watch set up successfully for collection at ${(path, where)}');
 
     return controller.stream;
   }
@@ -177,10 +191,38 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
   }
 
   @override
-  Future<int> count(String path) async {
-    final collection = await db.collection(path).count().get();
+  Future<int> count(String path, {DocumentQuery? where}) async {
+    final result = await _filterCollection(path, where).count().get();
 
-    return collection.count ?? 0;
+    return result.count ?? 0;
+  }
+
+  Query<Map<String, dynamic>> _filterCollection(
+      String path, DocumentQuery? query) {
+    Query<Map<String, dynamic>> filter = db.collection(path);
+
+    if (query != null) {
+      final queries = [query, ...query.subqueries];
+
+      for (var query in queries) {
+        filter = filter.where(
+          query.field,
+          isEqualTo: query.isEqualTo,
+          isNotEqualTo: query.isNotEqualTo,
+          isLessThan: query.isLessThan,
+          isLessThanOrEqualTo: query.isLessThanOrEqualTo,
+          isGreaterThan: query.isGreaterThan,
+          isGreaterThanOrEqualTo: query.isGreaterThanOrEqualTo,
+          arrayContains: query.arrayContains,
+          arrayContainsAny: query.arrayContainsAny,
+          whereIn: query.whereIn,
+          whereNotIn: query.whereNotIn,
+          isNull: query.isNull,
+        );
+      }
+    }
+
+    return filter;
   }
 }
 

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:mcquenji_core/mcquenji_core.dart';
 import 'package:mcquenji_firebase/mcquenji_firebase.dart';
+import 'package:mcquenji_firebase/src/firebase_firestore/firebase_firestore.dart';
 
 /// An abstract class to manage a collection in Firestore with a specific data model [T].
 /// This class should be extended by a concrete implementation that specifies the [deserialize] and [serialize] methods.
@@ -86,7 +87,8 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
   });
 
   final Map<String, StreamController<T>> _watchedDocuments = {};
-  final Map<String, StreamController<Map<String, T>>> _collectionStreams = {};
+  final Map<(String, DocumentQuery?), StreamController<Map<String, T>>>
+      _collectionStreams = {};
 
   /// Saves the given [model] to the Firestore collection with the specified [id].
   ///
@@ -159,7 +161,10 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
   ///
   /// The models are returned as a map where the key is the document id and the value is the deserialized data.
   @nonVirtual
-  Future<Map<String, T>> readAll([String subcollection = ""]) async {
+  Future<Map<String, T>> readAll({
+    String subcollection = "",
+    DocumentQuery? where,
+  }) async {
     final path = '$collectionPath/$subcollection';
 
     log('Reading all documents in collection: $path');
@@ -179,24 +184,27 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
   /// Depending on how many models you have, this may deplete your quota.
   /// Use with caution.
   @nonVirtual
-  Stream<Map<String, T>> watchAll([String subcollection = ""]) {
+  Stream<Map<String, T>> watchAll({
+    String subcollection = "",
+    DocumentQuery? where,
+  }) {
     final path = '$collectionPath/$subcollection';
 
-    log('Setting up watch on all documents in collection: $path');
+    log('Setting up watch on all documents in collection: ${(path, where)}');
 
-    if (_collectionStreams.containsKey(path)) {
-      log('Watch already exists for collection: $path');
-      return _collectionStreams[path]!.stream;
+    if (_collectionStreams.containsKey((path, where))) {
+      log('Watch already exists for collection: ${(path, where)}');
+      return _collectionStreams[(path, where)]!.stream;
     }
 
     // Sink is closed in [dispose]
     // ignore: close_sinks
     final controller = StreamController<Map<String, T>>.broadcast();
 
-    _collectionStreams[path] = controller;
+    _collectionStreams[(path, where)] = controller;
 
     db.watchAll(collectionPath).listen((event) {
-      log('Received update for collection: $path');
+      log('Received update for collection: ${(path, where)}');
       controller.add(
         event.map(
           (key, value) => MapEntry(key, deserialize(value)),
@@ -204,7 +212,7 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
       );
     });
 
-    log('Watch set up successfully for collection: $path');
+    log('Watch set up successfully for collection: ${(path, where)}');
 
     return controller.stream;
   }
@@ -237,6 +245,6 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
   String newDocumentId() => db.generateNewDocumentId(collectionPath);
 
   /// Returns the number of documents in the collection.
-  Future<int> count([String subcollection = ""]) =>
-      db.count("$collectionPath/$subcollection");
+  Future<int> count({String subcollection = "", DocumentQuery? where}) =>
+      db.count("$collectionPath/$subcollection", where: where);
 }
