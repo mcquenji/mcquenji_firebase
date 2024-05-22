@@ -146,14 +146,15 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
     DocumentQuery? where,
   }) {
     log('Setting up watch on collection at $path');
+
     if (_watchedCollections.containsKey((path, where))) {
       log('Watch already exists for collection at $path');
-      return _watchedCollections[(path, where)]!.stream.asBroadcastStream();
+      return _watchedCollections[(path, where)]!.stream;
     }
 
     // The sink is closed when [dispose] is called.
     // ignore: close_sinks
-    final controller = _CollectionStream();
+    final controller = _CollectionStream.broadcast();
 
     Map<String, Map<String, dynamic>> data = {};
 
