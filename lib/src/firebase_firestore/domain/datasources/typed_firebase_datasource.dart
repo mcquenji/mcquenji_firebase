@@ -168,7 +168,7 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
     final path = '$collectionPath/$subcollection';
 
     log('Reading all documents in collection: $path');
-    var data = await db.readAll(collectionPath);
+    var data = await db.readAll(path);
 
     log('Successfully read ${data.length} documents from collection: $path');
     return data.map((key, value) => MapEntry(key, deserialize(value)));
