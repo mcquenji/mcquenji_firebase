@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mcquenji_core/mcquenji_core.dart';
 import 'package:mcquenji_firebase/mcquenji_firebase.dart';
 import 'package:mcquenji_firebase/src/firebase_firestore/firebase_firestore.dart';
+import 'package:rxdart/subjects.dart';
 
 /// An abstract class to manage a collection in Firestore with a specific data model [T].
 /// This class should be extended by a concrete implementation that specifies the [deserialize] and [serialize] methods.
@@ -86,9 +87,9 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
     required this.db,
   });
 
-  final Map<String, StreamController<T>> _watchedDocuments = {};
-  final Map<(String, DocumentQuery?), StreamController<Map<String, T>>>
-      _collectionStreams = {};
+  final Map<String, BehaviorSubject<T>> _documentSubjects = {};
+  final Map<(String, DocumentQuery?), BehaviorSubject<Map<String, T>>>
+      _collectionSubjects = {};
 
   /// Saves the given [model] to the Firestore collection with the specified [id].
   ///
@@ -132,29 +133,29 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
   @nonVirtual
   Stream<T> watch(String id) {
     log('Setting up watch on document with ID: $id in collection: $collectionPath');
-    if (_watchedDocuments.containsKey(id)) {
+    if (_documentSubjects.containsKey(id)) {
       log('Watch already exists for document with ID: $id in collection: $collectionPath');
-      return _watchedDocuments[id]!.stream;
+      return _documentSubjects[id]!.stream;
     }
 
-    var controller = StreamController<T>.broadcast();
+    var subject = BehaviorSubject<T>();
 
     db.watch("$collectionPath/$id").listen((event) {
       if (event.isLeft) {
         log('Document with ID: $id was deleted from collection: $collectionPath');
-        controller.addError(DocumentNotFoundException(id));
-        controller.close();
+        subject.addError(DocumentNotFoundException(id));
+        subject.close();
         return;
       }
 
       log('Received update for document with ID: $id in collection: $collectionPath');
-      controller.add(deserialize(event.right));
+      subject.add(deserialize(event.right));
     });
 
-    _watchedDocuments[id] = controller;
+    _documentSubjects[id] = subject;
 
     log('Watch set up successfully for document with ID: $id in collection: $collectionPath');
-    return controller.stream;
+    return subject.stream;
   }
 
   /// Returns all models stored in the Firestore collection.
@@ -192,20 +193,20 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
 
     log('Setting up watch on all documents in collection: ${(path, where)}');
 
-    if (_collectionStreams.containsKey((path, where))) {
+    if (_collectionSubjects.containsKey((path, where))) {
       log('Watch already exists for collection: ${(path, where)}');
-      return _collectionStreams[(path, where)]!.stream;
+      return _collectionSubjects[(path, where)]!.stream;
     }
 
     // Sink is closed in [dispose]
     // ignore: close_sinks
-    final controller = StreamController<Map<String, T>>.broadcast();
+    final subject = BehaviorSubject<Map<String, T>>();
 
-    _collectionStreams[(path, where)] = controller;
+    _collectionSubjects[(path, where)] = subject;
 
     db.watchAll(path).listen((event) {
       log('Received update for collection: ${(path, where)}');
-      controller.add(
+      subject.add(
         event.map(
           (key, value) => MapEntry(key, deserialize(value)),
         ),
@@ -214,23 +215,23 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
 
     log('Watch set up successfully for collection: ${(path, where)}');
 
-    return controller.stream;
+    return subject.stream;
   }
 
   @override
   @mustCallSuper
   void dispose() {
     log('Disposing TypedFirebaseFirestoreDataSource for collection: $collectionPath');
-    for (var e in _watchedDocuments.values) {
+    for (var e in _documentSubjects.values) {
       e.close();
     }
-    _watchedDocuments.clear();
+    _documentSubjects.clear();
     log('Closed and cleared watched document streams');
 
-    for (var e in _collectionStreams.values) {
+    for (var e in _collectionSubjects.values) {
       e.close();
     }
-    _collectionStreams.clear();
+    _collectionSubjects.clear();
 
     log('Closed and cleared collection streams');
   }

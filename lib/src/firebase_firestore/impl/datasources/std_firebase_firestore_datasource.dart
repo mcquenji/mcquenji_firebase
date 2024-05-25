@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:either_dart/either.dart';
 import 'package:mcquenji_firebase/mcquenji_firebase.dart';
 import 'package:mcquenji_firebase/src/firebase_firestore/domain/domain.dart';
+import 'package:rxdart/subjects.dart';
 
 /// Standard implementation of [FirebaseFirestoreDataSource].
 class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
@@ -101,7 +102,7 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
     log('Setting up watch on document at $path');
     if (_watchedDocs.containsKey(path)) {
       log('Watch already exists for document at $path. Returning existing stream.');
-      return _watchedDocs[path]!.stream.asBroadcastStream();
+      return _watchedDocs[path]!.stream;
     }
 
     final controller = _DocStream();
@@ -154,7 +155,7 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
 
     // The sink is closed when [dispose] is called.
     // ignore: close_sinks
-    final controller = _CollectionStream.broadcast();
+    final controller = _CollectionStream();
 
     Map<String, Map<String, dynamic>> data = {};
 
@@ -228,6 +229,6 @@ class StdFirebaseFirestoreDataSource extends FirebaseFirestoreDataSource {
 }
 
 typedef _DocStream
-    = StreamController<Either<DocumentDeletedException, Map<String, dynamic>>>;
+    = BehaviorSubject<Either<DocumentDeletedException, Map<String, dynamic>>>;
 
-typedef _CollectionStream = StreamController<Map<String, Map<String, dynamic>>>;
+typedef _CollectionStream = BehaviorSubject<Map<String, Map<String, dynamic>>>;

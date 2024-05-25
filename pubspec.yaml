@@ -9,20 +9,21 @@ environment:
   flutter: ">=1.17.0"
 
 dependencies:
-  flutter_bloc: ^8.1.4
+  cloud_firestore: ^4.17.3
   dio: ^5.4.3+1
   either_dart: ^1.0.0
+  firebase_auth: ^4.19.5
+  firebase_core: ^2.31.0
   flutter:
     sdk: flutter
+  flutter_bloc: ^8.1.4
   flutter_modular: ^6.3.3
   freezed_annotation: ^2.4.1
   logging: ^1.2.0
   mcquenji_core:
     git:
       url: https://github.com/mcquenji/mcquenji_core.git
-  firebase_auth: ^4.19.5
-  firebase_core: ^2.31.0
-  cloud_firestore: ^4.17.3
+  rxdart: ^0.27.7
 
 dev_dependencies:
   build_runner: ^2.4.9
