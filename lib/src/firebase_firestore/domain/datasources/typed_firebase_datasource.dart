@@ -39,7 +39,8 @@ import 'package:rxdart/subjects.dart';
 ///   }
 /// }
 /// ```
-abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
+abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource
+    implements IGenericSerializer<T, JSON> {
   @override
   String get name => 'Firebase.Firestore.Typed';
 
@@ -235,12 +236,6 @@ abstract class TypedFirebaseFirestoreDataSource<T> extends Datasource {
 
     log('Closed and cleared collection streams');
   }
-
-  /// Deserializes the data from the Firestore database.
-  T deserialize(Map<String, dynamic> data);
-
-  /// Serializes the data to be written to the Firestore database.
-  Map<String, dynamic> serialize(T data);
 
   /// Generates a new document ID.
   String newDocumentId() => db.generateNewDocumentId(collectionPath);
