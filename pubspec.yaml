@@ -23,7 +23,7 @@ dependencies:
   mcquenji_core:
     git:
       url: https://github.com/mcquenji/mcquenji_core.git
-  rxdart: ^0.27.7
+  rxdart: ^0.28.0
 
 dev_dependencies:
   build_runner: ^2.4.9
